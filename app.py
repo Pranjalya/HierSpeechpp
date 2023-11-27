@@ -1,4 +1,5 @@
 import os
+import time
 import torch
 import argparse
 import numpy as np
@@ -65,6 +66,8 @@ def tts(
     torch.cuda.manual_seed(random_seed)
     np.random.seed(random_seed)
 
+    start_time = time.time()
+
     text = text_to_sequence(str(text), ["english_cleaners2"])
 
     token = add_blank_token(text).unsqueeze(0).cuda()
@@ -86,6 +89,8 @@ def tts(
     ori_prompt_len = audio.shape[-1]
     p = (ori_prompt_len // 1600 + 1) * 1600 - ori_prompt_len
     audio = torch.nn.functional.pad(audio, (0, p), mode="constant").data
+
+    print("Time to load prompt:", time.time() - start_time)
 
     # If you have a memory issue during denosing the prompt, try to denoise the prompt with cpu before TTS
     # We will have a plan to replace a memory-efficient denoiser
@@ -133,6 +138,7 @@ def tts(
 
     ## TTV (Text --> W2V, F0)
     with torch.no_grad():
+        text_to_vec_start = time.time()
         w2v_x, pitch = text2w2v.infer_noise_control(
             token,
             token_length,
@@ -143,11 +149,13 @@ def tts(
             length_scale=duratuion_length,
             denoise_ratio=denoise_ratio,
         )
+        print("Time to caculate duration and text2vec", time.time() - text_to_vec_start)
         src_length = torch.LongTensor([w2v_x.size(2)]).cuda()
 
         pitch[pitch < torch.log(torch.tensor([55]).cuda())] = 0
 
         ## Hierarchical Speech Synthesizer (W2V, F0 --> 16k Audio)
+        vec2wav_time = time.time()
         converted_audio = net_g.voice_conversion_noise_control(
             w2v_x,
             src_length,
@@ -166,8 +174,11 @@ def tts(
             converted_audio / (torch.abs(converted_audio).max()) * 32767.0 * 0.999
         )
         converted_audio = converted_audio.cpu().numpy().astype("int16")
+        print("Time taken to convert vec2wav with SSR", time.time() - vec2wav_time)
+        print("Time taken for end to end text to audio", time.time() - text_to_vec_start)
+        print("Time taken for end to end text to audio with prompt", time.time() - start_time)
 
-        return (48000, converted_audio)
+    return (48000, converted_audio)
 
 
 def main():
