@@ -439,6 +439,7 @@ class SynthesizerTrn(nn.Module):
     w = torch.exp(logw) * x_mask * length_scale
     w_ceil = torch.ceil(w)
     y_lengths = torch.clamp_min(torch.sum(w_ceil, [1, 2]), 1).long()
+    print("Y_lens", y_lengths.shape, y_lengths)
     y_mask = torch.unsqueeze(commons.sequence_mask(y_lengths, None), 1).to(x_mask.dtype)
     attn_mask = torch.unsqueeze(x_mask, 2) * torch.unsqueeze(y_mask, -1)
     attn = commons.generate_path(w_ceil, attn_mask)
@@ -448,6 +449,9 @@ class SynthesizerTrn(nn.Module):
 
     z_p = m_p + torch.randn_like(m_p) * torch.exp(logs_p) * noise_scale
     z = self.flow(z_p, y_mask, g=g, reverse=True)
+
+    print("Z", z.shape)
+    print("y_mask", y_mask.shape)
 
     w2v = self.w2v_decoder(z, y_mask, g=g)
     pitch = self.pp(w2v, g)
