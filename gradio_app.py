@@ -34,8 +34,8 @@ def inference(text, prompt, vec2wav_prompt, duration_only, ttv_temperature, vc_t
         return "", (sr, waveform)
 
 
-text = gr.Textbox(label="Text", required=True)
-prompt = gr.Audio(type="filepath", label="Prompt", required=True)
+text = gr.Textbox(label="Text")
+prompt = gr.Audio(type="filepath", label="Prompt")
 vec2wav_prompt = gr.Audio(type="filepath", label="Vector to Waveform Prompt (Leave it blank if we use same prompt as above)")
 duration_only = gr.Checkbox(value=True, label="Return only duration")
 ttv_temperature = gr.Slider(0, 1, 0.333, label="Text to Vector Temperature")
