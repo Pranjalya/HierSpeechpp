@@ -15,8 +15,6 @@ from ttv_v1.styleencoder import StyleEncoder
 import commons
 from ttv_v1.modules import WN
 
-from time import time
-
 def get_2d_padding(kernel_size: tp.Tuple[int, int], dilation: tp.Tuple[int, int] = (1, 1)):
     return (((kernel_size[0] - 1) * dilation[0]) // 2, ((kernel_size[1] - 1) * dilation[1]) // 2)
 
@@ -391,12 +389,11 @@ class SynthesizerTrn(nn.Module):
 
   @torch.no_grad()
   def infer(self, x, x_lengths, y_mel, y_length, noise_scale=1, noise_scale_w=1, length_scale=1):
-    start_time = time.time()
+
     y_mask = torch.unsqueeze(commons.sequence_mask(y_length, y_mel.size(2)), 1).to(y_mel.dtype)
 
     # Speaker embedding from mel (Style Encoder)
     g = self.emb_g(y_mel, y_mask).unsqueeze(-1)
-    print("Time to caclulate text2vec audio embeddings", time.time() - start_time)
     
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths, g=g)
 
@@ -442,7 +439,6 @@ class SynthesizerTrn(nn.Module):
     w = torch.exp(logw) * x_mask * length_scale
     w_ceil = torch.ceil(w)
     y_lengths = torch.clamp_min(torch.sum(w_ceil, [1, 2]), 1).long()
-    print("Y_lens", y_lengths.shape, y_lengths)
     y_mask = torch.unsqueeze(commons.sequence_mask(y_lengths, None), 1).to(x_mask.dtype)
     attn_mask = torch.unsqueeze(x_mask, 2) * torch.unsqueeze(y_mask, -1)
     attn = commons.generate_path(w_ceil, attn_mask)
@@ -452,9 +448,6 @@ class SynthesizerTrn(nn.Module):
 
     z_p = m_p + torch.randn_like(m_p) * torch.exp(logs_p) * noise_scale
     z = self.flow(z_p, y_mask, g=g, reverse=True)
-
-    print("Z", z.shape)
-    print("y_mask", y_mask.shape)
 
     w2v = self.w2v_decoder(z, y_mask, g=g)
     pitch = self.pp(w2v, g)

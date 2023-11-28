@@ -65,13 +65,14 @@ def tts(
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
     np.random.seed(random_seed)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     start_time = time.time()
 
     text = text_to_sequence(str(text), ["english_cleaners2"])
 
-    token = add_blank_token(text).unsqueeze(0).cuda()
-    token_length = torch.LongTensor([token.size(-1)]).cuda()
+    token = add_blank_token(text).unsqueeze(0).to(device)
+    token_length = torch.LongTensor([token.size(-1)]).to(device)
 
     # Prompt load
     audio, sample_rate = torchaudio.load(prompt)
@@ -95,7 +96,7 @@ def tts(
     # If you have a memory issue during denosing the prompt, try to denoise the prompt with cpu before TTS
     # We will have a plan to replace a memory-efficient denoiser
     if denoise == 0:
-        audio = torch.cat([audio.cuda(), audio.cuda()], dim=0)
+        audio = torch.cat([audio.to(device), audio.to(device)], dim=0)
     else:
         with torch.no_grad():
             if ori_prompt_len > 80000:
@@ -103,7 +104,7 @@ def tts(
                 for i in range((ori_prompt_len // 80000)):
                     denoised_audio.append(
                         denoise(
-                            audio.squeeze(0).cuda()[i * 80000 : (i + 1) * 80000],
+                            audio.squeeze(0).to(device)[i * 80000 : (i + 1) * 80000],
                             denoiser,
                             hps_denoiser,
                         )
@@ -111,7 +112,7 @@ def tts(
 
                 denoised_audio.append(
                     denoise(
-                        audio.squeeze(0).cuda()[(i + 1) * 80000 :],
+                        audio.squeeze(0).to(device)[(i + 1) * 80000 :],
                         denoiser,
                         hps_denoiser,
                     )
@@ -119,10 +120,10 @@ def tts(
                 denoised_audio = torch.cat(denoised_audio, dim=1)
             else:
                 denoised_audio = denoise(
-                    audio.squeeze(0).cuda(), denoiser, hps_denoiser
+                    audio.squeeze(0).to(device), denoiser, hps_denoiser
                 )
 
-        audio = torch.cat([audio.cuda(), denoised_audio[:, : audio.shape[-1]]], dim=0)
+        audio = torch.cat([audio.to(device), denoised_audio[:, : audio.shape[-1]]], dim=0)
 
     audio = audio[
         :, :ori_prompt_len
@@ -131,7 +132,7 @@ def tts(
     if audio.shape[-1] < 48000:
         audio = torch.cat([audio, audio, audio, audio, audio], dim=1)
 
-    src_mel = mel_fn(audio.cuda())
+    src_mel = mel_fn(audio.to(device))
 
     src_length = torch.LongTensor([src_mel.size(2)]).to(device)
     src_length2 = torch.cat([src_length, src_length], dim=0)
@@ -150,9 +151,11 @@ def tts(
             denoise_ratio=denoise_ratio,
         )
         print("Time to caculate duration and text2vec", time.time() - text_to_vec_start)
-        src_length = torch.LongTensor([w2v_x.size(2)]).cuda()
+        print("Time to caculate duration and text2vec from start", time.time() - start_time)
 
-        pitch[pitch < torch.log(torch.tensor([55]).cuda())] = 0
+        src_length = torch.LongTensor([w2v_x.size(2)]).to(device)
+
+        pitch[pitch < torch.log(torch.tensor([55]).to(device))] = 0
 
         ## Hierarchical Speech Synthesizer (W2V, F0 --> 16k Audio)
         vec2wav_time = time.time()
@@ -177,6 +180,8 @@ def tts(
         print("Time taken to convert vec2wav with SSR", time.time() - vec2wav_time)
         print("Time taken for end to end text to audio", time.time() - text_to_vec_start)
         print("Time taken for end to end text to audio with prompt", time.time() - start_time)
+
+        print(converted_audio.shape)
 
     return (48000, converted_audio)
 
@@ -239,33 +244,33 @@ def main():
         f_max=hps.data.mel_fmax,
         n_mels=hps.data.n_mel_channels,
         window_fn=torch.hann_window,
-    ).cuda()
+    ).to(device)
 
     net_g = SynthesizerTrn(
         hps.data.filter_length // 2 + 1,
         hps.train.segment_size // hps.data.hop_length,
         **hps.model
-    ).cuda()
-    net_g.load_state_dict(torch.load(a.ckpt))
+    ).to(device)
+    net_g.load_state_dict(torch.load(a.ckpt, map_location=device))
     _ = net_g.eval()
 
     text2w2v = Text2W2V(
         hps.data.filter_length // 2 + 1,
         hps.train.segment_size // hps.data.hop_length,
         **hps_t2w2v.model
-    ).cuda()
-    text2w2v.load_state_dict(torch.load(a.ckpt_text2w2v))
+    ).to(device)
+    text2w2v.load_state_dict(torch.load(a.ckpt_text2w2v, map_location=device))
     text2w2v.eval()
 
     speechsr = SpeechSR48(
         h_sr48.data.n_mel_channels,
         h_sr48.train.segment_size // h_sr48.data.hop_length,
         **h_sr48.model
-    ).cuda()
+    ).to(device)
     utils.load_checkpoint(a.ckpt_sr48, speechsr, None)
     speechsr.eval()
 
-    denoiser = MPNet(hps_denoiser).cuda()
+    denoiser = MPNet(hps_denoiser).to(device)
     state_dict = load_checkpoint(a.denoiser_ckpt, device)
     denoiser.load_state_dict(state_dict["generator"])
     denoiser.eval()
@@ -357,7 +362,7 @@ def main():
             ],
         ],
     )
-    demo_play.launch()
+    demo_play.launch(share=True)
 
 
 if __name__ == "__main__":
