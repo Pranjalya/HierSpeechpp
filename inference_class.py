@@ -291,7 +291,7 @@ class HierspeechSynthesizer:
             converted_audio = self.net_g.voice_conversion_noise_control(
                 w2v_x,
                 src_length,
-                src_mel,
+                trg_mel,
                 trg_length,
                 pitch,
                 noise_scale=vc_temperature,
