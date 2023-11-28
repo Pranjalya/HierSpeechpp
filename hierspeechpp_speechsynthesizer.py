@@ -629,7 +629,7 @@ class SynthesizerTrn(nn.Module):
 
       self.emb = torch.nn.Embedding(1, 256)
       torch.nn.init.normal_(self.emb.weight, 0.0, 256 ** -0.5)
-      self.null = torch.LongTensor([0]).cuda()
+      self.null = torch.LongTensor([0])
       self.uncond_ratio = uncond_ratio
     self.cfg = cfg
   @torch.no_grad()
