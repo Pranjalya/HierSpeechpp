@@ -55,13 +55,13 @@ def run(rank, n_gpus, hps):
         f_min=hps.data.mel_fmin,
         f_max=hps.data.mel_fmax,
         n_mels=hps.data.n_mel_channels,
-        window_fn=torch.hann_windows
+        window_fn=torch.hann_window
     ).cuda(rank)
 
     train_dataset = AudioDataset(hps, training=True)
     train_sampler = DistributedSampler(train_dataset) if n_gpus > 1 else None
     train_loader = DataLoader(
-        train_dataset, batch_size=hps.train.batch_size, num_workers=32,
+        train_dataset, batch_size=hps.train.batch_size, num_workers=6,
         sampler=train_sampler, drop_last=True
     )
 
@@ -155,6 +155,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, schedulers, loade
             loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, mask) * hps.train.c_kl
 
             phoneme_predicted = phoneme_predicted.permute(2, 0, 1).log_softmax(2)
+            print(phoneme_predicted.shape, text_for_ctc.shape, length, text_ctc_length)
             loss_phoneme_prediction = F.ctc_loss(phoneme_predicted, text_for_ctc, length, text_ctc_length) 
             loss_gen_all = loss_w2v + loss_kl + loss_f0 * hps.train.c_f0 + loss_dur + loss_phoneme_prediction
 
@@ -169,6 +170,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, schedulers, loade
             if global_step % hps.train.log_interval == 0:
                 lr = optim_g.param_groups[0]['lr']
                 losses = [loss_w2v]
+                print("LOSSES", losses)
                 logger.info('Train Epoch: {} [{:.0f}%]'.format(
                     epoch,
                     100. * batch_idx / len(train_loader)))

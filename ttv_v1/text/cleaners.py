@@ -17,6 +17,8 @@ from unidecode import unidecode
 from phonemizer import phonemize
 from phonemizer.backend import EspeakBackend
 backend = EspeakBackend('en-us', preserve_punctuation=True, with_stress=True)
+hindi_backend = EspeakBackend('hi', preserve_punctuation=True, with_stress=True, language_switch='remove-flags')
+
 
 # Regular expression matching whitespace:
 _whitespace_re = re.compile(r'\s+')
@@ -97,5 +99,12 @@ def english_cleaners2(text):
   text = lowercase(text)
   text = expand_abbreviations(text)
   phonemes = backend.phonemize([text], strip=True)[0]
+  phonemes = collapse_whitespace(phonemes)
+  return phonemes
+
+def hindi_cleaners2(text):
+  '''Pipeline for Hindi text, including abbreviation expansion. + punctuation + stress'''
+  text = convert_to_ascii(text)
+  phonemes = hindi_backend.phonemize([text], strip=True)[0]
   phonemes = collapse_whitespace(phonemes)
   return phonemes

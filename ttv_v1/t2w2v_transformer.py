@@ -12,6 +12,7 @@ import attentions
 from commons import init_weights
 
 from ttv_v1 import modules
+from ttv_v1 import monotonic_align
 from ttv_v1.modules import WN
 from ttv_v1.styleencoder import StyleEncoder 
  
@@ -403,7 +404,8 @@ class SynthesizerTrn(nn.Module):
     z_p = self.flow(z, y_mask, g=g)
 
     # Slicing for windowed generator training 
-    w2v_slice, ids_slice = commons.rand_slice_segments(w2v, length, 60)
+    # Passing length as None because w2v is padded to 512 length
+    w2v_slice, ids_slice = commons.rand_slice_segments(w2v, None, 60)
 
     # Pitch Predictor
     pitch_predicted = self.pp(w2v_slice, g)

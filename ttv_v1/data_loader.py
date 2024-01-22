@@ -16,7 +16,7 @@ class AudioDataset(torch.utils.data.Dataset):
     def __init__(self, config, training=True):
         super(AudioDataset, self).__init__()
         self.config = config
-        self.data_ratio = config.data.train_data_ratio
+        # self.data_ratio = config.data.train_data_ratio
         self.hop_length = config.data.hop_length
         self.training = training
         self.mel_length = config.train.segment_size // config.data.hop_length
@@ -67,7 +67,7 @@ class AudioDataset(torch.utils.data.Dataset):
         text_length = torch.LongTensor([text.shape[-1]])
         text = torch.nn.functional.pad(text, (0, 403 - text.shape[-1]), 'constant')
  
-        text_ctc_length = torch.LongTensor([text_for_ctc.shape[-1]])
+        text_ctc_length = torch.LongTensor([min(201, text_for_ctc.shape[-1])])
         text_for_ctc = torch.nn.functional.pad(text_for_ctc, (0, 201 - text_for_ctc.shape[-1]), 'constant')    
         
         return segment, f0_segment, length, text, text_length, w2v, text_for_ctc, text_ctc_length 
