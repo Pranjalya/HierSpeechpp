@@ -33,6 +33,7 @@ def main():
     os.environ['MASTER_PORT'] = str(port)
     hps = utils.get_hparams()
     mp.spawn(run, nprocs=n_gpus, args=(n_gpus, hps,))
+    # run(0, 1, hps)
 
 def run(rank, n_gpus, hps):
     global global_step
@@ -155,7 +156,6 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, schedulers, loade
             loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, mask) * hps.train.c_kl
 
             phoneme_predicted = phoneme_predicted.permute(2, 0, 1).log_softmax(2)
-            print(phoneme_predicted.shape, text_for_ctc.shape, length, text_ctc_length)
             loss_phoneme_prediction = F.ctc_loss(phoneme_predicted, text_for_ctc, length, text_ctc_length) 
             loss_gen_all = loss_w2v + loss_kl + loss_f0 * hps.train.c_f0 + loss_dur + loss_phoneme_prediction
 
@@ -170,7 +170,6 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, schedulers, loade
             if global_step % hps.train.log_interval == 0:
                 lr = optim_g.param_groups[0]['lr']
                 losses = [loss_w2v]
-                print("LOSSES", losses)
                 logger.info('Train Epoch: {} [{:.0f}%]'.format(
                     epoch,
                     100. * batch_idx / len(train_loader)))

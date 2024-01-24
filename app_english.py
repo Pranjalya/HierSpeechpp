@@ -8,7 +8,7 @@ import torchaudio
 import utils
 from Mels_preprocess import MelSpectrogramFixed
 
-from hierspeechpp_speechsynthesizer import SynthesizerTrn
+# from hierspeechpp_speechsynthesizer import SynthesizerTrn
 from ttv_v1.text import text_to_sequence
 from ttv_v1.t2w2v_transformer import SynthesizerTrn as Text2W2V
 from speechsr24k.speechsr import SynthesizerTrn as SpeechSR24
@@ -152,7 +152,7 @@ def tts(
         )
         print("Time to caculate duration and text2vec", time.time() - text_to_vec_start)
         print("Time to caculate duration and text2vec from start", time.time() - start_time)
-        print(w2v_x.shape)
+
         src_length = torch.LongTensor([w2v_x.size(2)]).to(device)
 
         pitch[pitch < torch.log(torch.tensor([55]).to(device))] = 0
@@ -200,7 +200,7 @@ def main():
         "--ckpt_text2w2v",
         "-ct",
         help="text2w2v checkpoint path",
-        default="/root/dev/HierSpeechpp/logs/hierspeech_hindi/G_20000.pth",
+        default="./logs/ttv_libritts_v1/ttv_lt960_ckpt.pth",
     )
     parser.add_argument("--ckpt_sr", type=str, default="./speechsr24k/G_340000.pth")
     parser.add_argument("--ckpt_sr48", type=str, default="./speechsr48k/G_100000.pth")
@@ -259,7 +259,7 @@ def main():
         hps.train.segment_size // hps.data.hop_length,
         **hps_t2w2v.model
     ).to(device)
-    text2w2v.load_state_dict(torch.load(a.ckpt_text2w2v, map_location=device)["model"])
+    text2w2v.load_state_dict(torch.load(a.ckpt_text2w2v, map_location=device))
     text2w2v.eval()
 
     speechsr = SpeechSR48(
@@ -299,68 +299,68 @@ def main():
                             <p style="text-align: left"> <a href="https://sh-lee-prml.github.io/HierSpeechpp-demo/">[Demo Page]</a> <a href="https://github.com/sh-lee-prml/HierSpeechpp">[Source Code]</a></p>
                             <p style="text-align: left"> HuggingFace provides us with a community GPU grant. Thanks 😊 </p>
                         </div>""",
-        # examples=[
-        #     [
-        #         "HierSpeech is a zero shot speech synthesis model, which can generate high-quality audio",
-        #         "./example/3_rick_gt.wav",
-        #         0.333,
-        #         0.333,
-        #         1.0,
-        #         1.0,
-        #         0,
-        #         1111,
-        #     ],
-        #     [
-        #         "HierSpeech is a zero shot speech synthesis model, which can generate high-quality audio",
-        #         "./example/dog.wav",
-        #         0.333,
-        #         0.667,
-        #         1.0,
-        #         1.0,
-        #         0,
-        #         1790,
-        #     ],
-        #     [
-        #         "HierSpeech is a zero shot speech synthesis model, which can generate high-quality audio",
-        #         "./example/ex01_whisper_00359.wav",
-        #         0.333,
-        #         0.333,
-        #         1.0,
-        #         1.0,
-        #         0,
-        #         1111,
-        #     ],
-        #     [
-        #         "하앜! It's too cold today",
-        #         "./example/openai_tts_sample.mp3",
-        #         0.333,
-        #         0.333,
-        #         1.0,
-        #         1.0,
-        #         0,
-        #         1111,
-        #     ],
-        #     [
-        #         "Hi there, I'm your new voice clone. Try your best to upload quality audio",
-        #         "./example/female.wav",
-        #         0.333,
-        #         0.333,
-        #         1.0,
-        #         1.0,
-        #         0,
-        #         1111,
-        #     ],
-        #     [
-        #         "Hello I'm HierSpeech++",
-        #         "./example/reference_1.wav",
-        #         0.333,
-        #         0.333,
-        #         1.0,
-        #         1.0,
-        #         0,
-        #         1111,
-        #     ],
-        # ],
+        examples=[
+            [
+                "HierSpeech is a zero shot speech synthesis model, which can generate high-quality audio",
+                "./example/3_rick_gt.wav",
+                0.333,
+                0.333,
+                1.0,
+                1.0,
+                0,
+                1111,
+            ],
+            [
+                "HierSpeech is a zero shot speech synthesis model, which can generate high-quality audio",
+                "./example/dog.wav",
+                0.333,
+                0.667,
+                1.0,
+                1.0,
+                0,
+                1790,
+            ],
+            [
+                "HierSpeech is a zero shot speech synthesis model, which can generate high-quality audio",
+                "./example/ex01_whisper_00359.wav",
+                0.333,
+                0.333,
+                1.0,
+                1.0,
+                0,
+                1111,
+            ],
+            [
+                "하앜! It's too cold today",
+                "./example/openai_tts_sample.mp3",
+                0.333,
+                0.333,
+                1.0,
+                1.0,
+                0,
+                1111,
+            ],
+            [
+                "Hi there, I'm your new voice clone. Try your best to upload quality audio",
+                "./example/female.wav",
+                0.333,
+                0.333,
+                1.0,
+                1.0,
+                0,
+                1111,
+            ],
+            [
+                "Hello I'm HierSpeech++",
+                "./example/reference_1.wav",
+                0.333,
+                0.333,
+                1.0,
+                1.0,
+                0,
+                1111,
+            ],
+        ],
     )
     demo_play.launch(share=True)
 

@@ -405,7 +405,7 @@ class SynthesizerTrn(nn.Module):
 
     # Slicing for windowed generator training 
     # Passing length as None because w2v is padded to 512 length
-    w2v_slice, ids_slice = commons.rand_slice_segments(w2v, None, 60)
+    w2v_slice, ids_slice = commons.rand_slice_segments(w2v, length, 60)
 
     # Pitch Predictor
     pitch_predicted = self.pp(w2v_slice, g)
