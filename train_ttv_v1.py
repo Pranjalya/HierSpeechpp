@@ -62,7 +62,7 @@ def run(rank, n_gpus, hps):
     train_dataset = AudioDataset(hps, training=True)
     train_sampler = DistributedSampler(train_dataset) if n_gpus > 1 else None
     train_loader = DataLoader(
-        train_dataset, batch_size=hps.train.batch_size, num_workers=6,
+        train_dataset, batch_size=hps.train.batch_size, num_workers=64,
         sampler=train_sampler, drop_last=True
     )
 

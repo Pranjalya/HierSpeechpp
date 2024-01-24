@@ -29,7 +29,7 @@ class AudioDataset(torch.utils.data.Dataset):
         self.audio_paths = parse_filelist(self.filelist_path)
         self.f0_paths = parse_filelist(self.filelist_path.replace('_wav', '_f0'))
         self.token_paths = parse_filelist(self.filelist_path.replace('_wav', '_token'))
-        self.w2v_paths = parse_filelist(self.filelist_path.replace('_wav', '_w2v'))
+        self.w2v_paths = parse_filelist(self.filelist_path.replace('_wav', '_repcodec'))
  
     def load_audio_to_torch(self, audio_path):
         audio, sample_rate = torchaudio.load(audio_path)
@@ -48,6 +48,7 @@ class AudioDataset(torch.utils.data.Dataset):
         audio, sample_rate = self.load_audio_to_torch(audio_path)
         f0 = torch.load(f0_path)
         w2v = torch.load(w2v_path, map_location='cpu')
+        w2v = w2v[:, :, :-1]
         text_for_ctc = torch.load(text_path)
         text = self.add_blank_token(text_for_ctc)   
       

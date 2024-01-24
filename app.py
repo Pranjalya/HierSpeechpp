@@ -65,7 +65,7 @@ def tts(
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
     np.random.seed(random_seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     start_time = time.time()
 
@@ -153,6 +153,8 @@ def tts(
         print("Time to caculate duration and text2vec", time.time() - text_to_vec_start)
         print("Time to caculate duration and text2vec from start", time.time() - start_time)
         print(w2v_x.shape)
+        torch.save(w2v_x.cpu(), "hierspeech_repcodec.pt")
+        print("Duration:", round(w2v_x.size(2) * 320 / 16000, 3))
         src_length = torch.LongTensor([w2v_x.size(2)]).to(device)
 
         pitch[pitch < torch.log(torch.tensor([55]).to(device))] = 0
@@ -215,7 +217,7 @@ def main():
     a = parser.parse_args()
 
     global device, hps, hps_t2w2v, h_sr, h_sr48, hps_denoiser
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
     hps = utils.get_hparams_from_file(
         os.path.join(os.path.split(a.ckpt)[0], "config.json")
