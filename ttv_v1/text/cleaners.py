@@ -104,7 +104,6 @@ def english_cleaners2(text):
 
 def hindi_cleaners2(text):
   '''Pipeline for Hindi text, including abbreviation expansion. + punctuation + stress'''
-  text = convert_to_ascii(text)
   phonemes = hindi_backend.phonemize([text], strip=True)[0]
   phonemes = collapse_whitespace(phonemes)
   return phonemes

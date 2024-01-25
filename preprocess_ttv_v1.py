@@ -58,8 +58,8 @@ def get_yaapt_f0(audio, rate=16000, interp=False):
 
 
 def preprocess(audio_file, text, hps, f0_path, w2v_path, text_path):
-    audio, sr = torchaudio.load(audio_file)
-    if not os.path.exists(text_path):
+    # audio, sr = torchaudio.load(audio_file)
+    if os.path.exists(text_path):
         text_for_ctc = text_to_sequence(text, hps.data.text_cleaners)
         speaker_dir, _ = os.path.split(text_path)
         if not os.path.exists(speaker_dir):
@@ -97,8 +97,8 @@ def process_data(d):
     text_path = os.path.join(dump_path, "tokens", speaker, os.path.basename(audio_path).replace(".flac", ".txt.pt"))
     text_paths.append(text_path)
     
-    if not (os.path.exists(f0_path) and os.path.exists(w2v_path) and os.path.exists(text_path)):
-        preprocess(filepath, text, hps, f0_path, w2v_path, text_path)
+    # if not (os.path.exists(f0_path) and os.path.exists(w2v_path) and os.path.exists(text_path)):
+    preprocess(filepath, text, hps, f0_path, w2v_path, text_path)
 
 
 
