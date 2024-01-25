@@ -150,8 +150,6 @@ def tts(
             length_scale=duratuion_length,
             denoise_ratio=denoise_ratio,
         )
-        l = w2v_x.shape[2]
-        w2v_x = torch.load("/root/dev/xtts_hindi_ft_dataset/hierspeechpp_dump/mms_7/inEhzp3nD0M/inEhzp3nD0M_0059.w2v.pt", map_location=pitch.device)[:, :, :l]
         print("Time to caculate duration and text2vec", time.time() - text_to_vec_start)
         print("Time to caculate duration and text2vec from start", time.time() - start_time)
         print(w2v_x.shape)
