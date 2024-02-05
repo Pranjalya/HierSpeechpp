@@ -1,0 +1,75 @@
+dataloader: 
+  batch_size : 128
+  shuffle: true
+  num_workers : 6
+  drop_last : true
+  pin_memory : true
+base_diffusion:
+  in_channels: 100
+  hint_channels: 1024
+  out_channels: 200
+  model_channels: 512
+  attention_resolutions: [ 4, 2, 1 ]
+  num_res_blocks: 2
+  channel_mult: [ 1, 1 ]
+  num_heads: 8
+  use_spatial_transformer: True
+  transformer_depth: 1
+  context_dim: 512
+  use_checkpoint: True
+  dims: 1
+  legacy: False
+refer_diffusion:
+  in_channels: 100
+  hint_channels: 1024
+  out_channels: 200
+  model_channels: 512
+  attention_resolutions: [ 4, 2, 1 ]
+  num_res_blocks: 2
+  channel_mult: [ 1, 1]
+  num_heads: 8
+  use_spatial_transformer: True
+  transformer_depth: 1
+  context_dim: 512
+  use_checkpoint: True
+  legacy: False
+clip:
+  embed_dim: 512
+  vision_cfg: 
+    layers: 6
+    width: 512
+    head_width: 64
+    mlp_ratio: 4.0
+    patch_dropout: 0.4
+    attentional_pool: False
+    patch_size: 32
+    image_size: 1000
+    in_channels: 100
+    pool_type: 'tok'
+    pos_embed_type: 'learnable'
+    final_ln_after_pool: false
+train:
+  train_batch_size : 48
+  gradient_accumulate_every : 1
+  train_lr : 0.0001
+  train_steps : 1000000
+  ema_update_every : 10
+  ema_decay : 0.995
+  adam_betas : [0.9, 0.99]
+  log_freq : 100
+  save_freq : 500
+  eval_freq : 250
+  timesteps : 1000
+  sampling_timesteps : 1000
+  results_folder : "results"
+  logs_folder  : "logs/vc"
+  num_workers : 6
+  eps : 0.000000001
+  keep_ckpts : 3
+  all_in_mem : false
+  unconditioned_percentage: 0.1
+data:
+  training_files : "/root/dev/xtts_hindi_ft_dataset/audio_processed"
+  val_files : "/root/dev/xtts_hindi_ft_dataset/val_processed"
+  sampling_rate : 24000
+  hop_length : 256

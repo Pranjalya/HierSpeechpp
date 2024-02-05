@@ -269,3 +269,20 @@ class HParams():
 
     def __repr__(self):
         return self.__dict__.__repr__()
+
+
+def repeat_expand_2d(content, target_len):
+    # content : [h, t]
+
+    src_len = content.shape[-1]
+    target = torch.zeros([content.shape[0], target_len], dtype=torch.float).to(content.device)
+    temp = torch.arange(src_len+1) * target_len / src_len
+    current_pos = 0
+    for i in range(target_len):
+        if i < temp[current_pos+1]:
+            target[:, i] = content[:, current_pos]
+        else:
+            current_pos += 1
+            target[:, i] = content[:, current_pos]
+
+    return target
