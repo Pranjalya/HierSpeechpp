@@ -65,11 +65,14 @@ def tts(
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
     np.random.seed(random_seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
 
     start_time = time.time()
 
+    print(str(text))
     text = text_to_sequence(str(text), ["hindi_cleaners2"])
+    print(text)
 
     token = add_blank_token(text).unsqueeze(0).to(device)
     token_length = torch.LongTensor([token.size(-1)]).to(device)
@@ -200,7 +203,7 @@ def main():
         "--ckpt_text2w2v",
         "-ct",
         help="text2w2v checkpoint path",
-        default="/root/dev/HierSpeechpp/logs/hierspeech_hindi/G_20000.pth",
+        default="./logs/hierspeech_hindi_v2/G_147000.pth",
     )
     parser.add_argument("--ckpt_sr", type=str, default="./speechsr24k/G_340000.pth")
     parser.add_argument("--ckpt_sr48", type=str, default="./speechsr48k/G_100000.pth")
@@ -215,7 +218,8 @@ def main():
     a = parser.parse_args()
 
     global device, hps, hps_t2w2v, h_sr, h_sr48, hps_denoiser
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
 
     hps = utils.get_hparams_from_file(
         os.path.join(os.path.split(a.ckpt)[0], "config.json")
@@ -283,7 +287,7 @@ def main():
                 label="Input Text",
                 value="मैं जिस तरह से सोच रहा था वह यह था कि हम वास्तव में कब जीवित हैं?"
             ),
-            gr.Audio(type="filepath", value="/root/dev/reference_samples/hindi_speaker_vc_16kHz.wav"),
+            gr.Audio(type="filepath", value="/workspace/reference_samples/hindi_speaker_vc_16kHz.wav"),
             gr.Slider(0, 1, 0.333),
             gr.Slider(0, 1, 0.333),
             gr.Slider(0, 1, 1.0),

@@ -44,6 +44,8 @@ class AudioDataset(torch.utils.data.Dataset):
         f0_path = self.f0_paths[index]
         text_path = self.token_paths[index]
         w2v_path = self.w2v_paths[index]
+
+        # print(audio_path, f0_path, text_path, w2v_path)
          
         audio, sample_rate = self.load_audio_to_torch(audio_path)
         f0 = torch.load(f0_path)

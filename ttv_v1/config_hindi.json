@@ -1,8 +1,8 @@
 {
     "train": {
       "log_interval": 200,
-      "eval_interval": 5000,
-      "save_interval": 5000,
+      "eval_interval": 3000,
+      "save_interval": 3000,
       "seed": 1234,
       "epochs": 20000,
       "learning_rate": 2e-4,
@@ -20,8 +20,8 @@
       "c_f0": 1
     },
     "data": {
-      "train_filelist_path": "/root/dev/xtts_hindi_ft_dataset/hierspeechpp_dump/filelists/train_wav.txt",
-      "test_filelist_path": "/root/dev/xtts_hindi_ft_dataset/hierspeechpp_dump/filelists/eval_wav.txt",
+      "train_filelist_path": "/workspace/data/hierspeechpp_dump/filelists/train_wav.txt",
+      "test_filelist_path": "/workspace/data/hierspeechpp_dump/filelists/eval_wav.txt",
       "text_cleaners":["hindi_cleaners2"],
       "max_wav_value": 32768.0,
       "sampling_rate": 16000,

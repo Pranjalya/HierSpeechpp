@@ -28,8 +28,8 @@ def main():
     assert torch.cuda.is_available(), "CPU training is not allowed."
 
     n_gpus = torch.cuda.device_count()
-    port = 50000 + random.randint(0,100)
-    os.environ['MASTER_ADDR'] = 'localhost'
+    port = 5003
+    os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = str(port)
     hps = utils.get_hparams()
     mp.spawn(run, nprocs=n_gpus, args=(n_gpus, hps,))
@@ -62,7 +62,7 @@ def run(rank, n_gpus, hps):
     train_dataset = AudioDataset(hps, training=True)
     train_sampler = DistributedSampler(train_dataset) if n_gpus > 1 else None
     train_loader = DataLoader(
-        train_dataset, batch_size=hps.train.batch_size, num_workers=6,
+        train_dataset, batch_size=hps.train.batch_size, num_workers=44,
         sampler=train_sampler, drop_last=True
     )
 
