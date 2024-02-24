@@ -8,7 +8,7 @@ import torchaudio
 import utils
 from Mels_preprocess import MelSpectrogramFixed
 
-# from hierspeechpp_speechsynthesizer import SynthesizerTrn
+from hierspeechpp_speechsynthesizer import SynthesizerTrn
 from ttv_v1.text import text_to_sequence
 from ttv_v1.t2w2v_transformer import SynthesizerTrn as Text2W2V
 from speechsr24k.speechsr import SynthesizerTrn as SpeechSR24
@@ -69,7 +69,7 @@ def tts(
 
     start_time = time.time()
 
-    text = text_to_sequence(str(text), ["hindi_cleaners2"])
+    text = text_to_sequence(str(text), ["english_cleaners2"])
 
     token = add_blank_token(text).unsqueeze(0).to(device)
     token_length = torch.LongTensor([token.size(-1)]).to(device)
@@ -190,7 +190,7 @@ def main():
     print("Initializing Inference Process..")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_prompt", default="example/steve-jobs-2005.wav")
+    parser.add_argument("--input_prompt", default="/workspace/reference_samples/39_121915_000005_000001.wav")
     parser.add_argument("--input_txt", default="example/abstract.txt")
     parser.add_argument("--output_dir", default="output")
     parser.add_argument(

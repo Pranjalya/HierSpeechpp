@@ -78,7 +78,6 @@ def do_spectrogram_diffusion(diffusion_model, diffuser, latents, conditioning_la
 def tts(
     text,
     prompt,
-    language,
     ttv_temperature,
     vc_temperature,
     duratuion_temperature,
@@ -96,7 +95,7 @@ def tts(
     start_time = time.time()
 
     print(str(text))
-    text = text_to_sequence(str(text), ["hindi_cleaners2"] if language == "hindi" else ["english_cleaners2"])
+    text = text_to_sequence(str(text), ["english_cleaners2"])
     print(text)
 
     token = add_blank_token(text).unsqueeze(0).to(device)
@@ -157,6 +156,9 @@ def tts(
     audio = audio[
         :, :ori_prompt_len
     ]  # 20231108 We found that large size of padding decreases a performance so we remove the paddings after denosing.
+
+    if audio.shape[-1] < 48000:
+        audio = torch.cat([audio, audio, audio, audio, audio], dim=1)
 
     src_mel = mel_fn(audio.to(device))
 
@@ -260,7 +262,7 @@ def main():
         "--ckpt_text2w2v",
         "-ct",
         help="text2w2v checkpoint path",
-        default="/workspace/HierSpeechpp/logs/hierspeech_hi_en/G_175000.pth",
+        default="./logs/ttv_libritts_v1/ttv_lt960_ckpt.pth",
     )
     parser.add_argument("--ckpt_sr", type=str, default="./speechsr24k/G_340000.pth")
     parser.add_argument("--ckpt_sr48", type=str, default="./speechsr48k/G_100000.pth")
@@ -275,8 +277,8 @@ def main():
     a = parser.parse_args()
 
     global device, hps, hps_t2w2v, h_sr, h_sr48, hps_denoiser
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # device = "cpu"
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cuda"
 
     hps = utils.get_hparams_from_file(
         os.path.join(os.path.split(a.ckpt)[0], "config.json")
@@ -302,7 +304,6 @@ def main():
 
     cfg = OmegaConf.load(cfg_path)
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    # device = "cpu"
     accelerator = Accelerator()
     trained_diffusion_steps = 1000
     desired_diffusion_steps = 50
@@ -338,7 +339,7 @@ def main():
         hps.train.segment_size // hps.data.hop_length,
         **hps_t2w2v.model
     ).to(device)
-    text2w2v.load_state_dict(torch.load(a.ckpt_text2w2v, map_location=device)["model"])
+    text2w2v.load_state_dict(torch.load(a.ckpt_text2w2v, map_location=device))
     text2w2v.eval()
 
     # speechsr = SpeechSR48(
@@ -360,10 +361,9 @@ def main():
             gr.Textbox(
                 max_lines=6,
                 label="Input Text",
-                value="मैं जिस तरह से सोच रहा था वह यह था कि हम वास्तव में कब जीवित हैं?"
+                value="What I was thinking was that, when are we truly alive?"
             ),
-            gr.Audio(type="filepath", value="/workspace/reference_samples/hindi_speaker_vc.wav"),
-            gr.Dropdown(["english", "hindi"], value="hindi", label="Language"),
+            gr.Audio(type="filepath", value="/workspace/reference_samples/39_121915_000005_000001.wav"),
             gr.Slider(0, 1, 0.333),
             gr.Slider(0, 1, 0.333),
             gr.Slider(0, 1, 1.0),

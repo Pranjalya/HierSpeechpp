@@ -8,6 +8,7 @@ import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.cuda.amp import autocast, GradScaler
+from datetime import datetime
 import random 
 import commons
 import utils
@@ -32,6 +33,7 @@ def main():
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = str(port)
     hps = utils.get_hparams()
+    print("N_GPUS: ", n_gpus)
     mp.spawn(run, nprocs=n_gpus, args=(n_gpus, hps,))
     # run(0, 1, hps)
 
@@ -62,7 +64,7 @@ def run(rank, n_gpus, hps):
     train_dataset = AudioDataset(hps, training=True)
     train_sampler = DistributedSampler(train_dataset) if n_gpus > 1 else None
     train_loader = DataLoader(
-        train_dataset, batch_size=hps.train.batch_size, num_workers=44,
+        train_dataset, batch_size=hps.train.batch_size, num_workers=12,
         sampler=train_sampler, drop_last=True
     )
 
@@ -173,7 +175,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, schedulers, loade
                 logger.info('Train Epoch: {} [{:.0f}%]'.format(
                     epoch,
                     100. * batch_idx / len(train_loader)))
-                logger.info([x.item() for x in losses] + [global_step, lr])
+                logger.info([x.item() for x in losses] + [global_step, lr, str(datetime.now())])
 
                 scalar_dict = {"loss/g/total": loss_gen_all,  "learning_rate": lr,
                                 "grad_norm_g": grad_norm_g}

@@ -187,45 +187,14 @@ class HierspeechSynthesizer:
 
         if self.load_denoiser and self.denoiser is not None and denoise_ratio != 0:
             with torch.no_grad():
-                if ori_prompt_len > 80000:
-                    denoised_audio = []
-                    for i in range((ori_prompt_len // 80000)):
-                        denoised_audio.append(
-                            denoise(
-                                audio.squeeze(0).to(self.device)[
-                                    i * 80000 : (i + 1) * 80000
-                                ],
-                                self.denoiser,
-                                self.hps_denoiser,
-                            )
-                        )
-
-                    denoised_audio.append(
-                        denoise(
-                            audio.squeeze(0).to(self.device)[(i + 1) * 80000 :],
-                            self.denoiser,
-                            self.hps_denoiser,
-                        )
-                    )
-                    denoised_audio = torch.cat(denoised_audio, dim=1)
-                else:
-                    denoised_audio = denoise(
-                        audio.squeeze(0).to(self.device),
-                        self.denoiser,
-                        self.hps_denoiser,
-                    )
-            audio = torch.cat(
-                [audio.to(self.device), denoised_audio[:, : audio.shape[-1]]], dim=0
-            )
+                denoised_audio = denoise(audio.squeeze(0).to(self.device), self.denoiser, self.hps_denoiser)
+            audio = torch.cat([audio.cuda(), denoised_audio[:,:audio.shape[-1]]], dim=0)
         else:
             audio = torch.cat([audio.to(self.device), audio.to(self.device)], dim=0)
 
         audio = audio[
             :, :ori_prompt_len
         ]  # 20231108 We found that large size of padding decreases a performance so we remove the paddings after denosing.
-
-        if audio.shape[-1] < 48000:
-            audio = torch.cat([audio, audio, audio, audio, audio], dim=1)
 
         mel = self.mel_fn(audio.to(self.device))
         return mel

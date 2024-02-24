@@ -57,10 +57,10 @@ def get_yaapt_f0(audio, rate=16000, interp=False):
     return f0
 
 
-def preprocess(audio_file, text, hps, f0_path, w2v_path, text_path):
-    # audio, sr = torchaudio.load(audio_file)
-    if os.path.exists(text_path):
-        text_for_ctc = text_to_sequence(text, hps.data.text_cleaners)
+def preprocess(audio_file, text, hps, f0_path, w2v_path, text_path, language):
+    audio, sr = torchaudio.load(audio_file)
+    if not os.path.exists(text_path):
+        text_for_ctc = text_to_sequence(text, ["hindi_cleaners2"] if language == "hi" else ["english_cleaners2"])
         speaker_dir, _ = os.path.split(text_path)
         if not os.path.exists(speaker_dir):
             os.makedirs(speaker_dir, exist_ok=True)
@@ -87,30 +87,40 @@ def preprocess(audio_file, text, hps, f0_path, w2v_path, text_path):
 
 
 def process_data(d):
-    audio_path, text, speaker = d.split("|")
+    if len(d.split("|")) > 4:
+        splits = d.split("|")
+        audio_path, speaker, language = splits[0], splits[-2], splits[-1]
+        text = ".".join(splits[1:-2])
+    elif len(d.split("|")) < 4:
+        return
+    else:
+        audio_path, text, speaker, language = d.split("|")
     filepath = os.path.join(audio_16kHz_path, speaker, os.path.basename(audio_path))
-    filepaths.append(filepath)
-    f0_path = os.path.join(dump_path, "f0_yaapt", speaker, os.path.basename(audio_path).replace(".flac", ".f0.pt"))
-    f0_paths.append(f0_path)
-    w2v_path = os.path.join(dump_path, "mms_7", speaker, os.path.basename(audio_path).replace(".flac", ".w2v.pt"))
-    w2v_paths.append(w2v_path)
-    text_path = os.path.join(dump_path, "tokens", speaker, os.path.basename(audio_path).replace(".flac", ".txt.pt"))
-    text_paths.append(text_path)
+    f0_path = os.path.join(dump_path, "f0_yaapt", speaker, os.path.basename(audio_path).replace(".flac", ".f0.pt").replace(".wav", ".f0.pt"))
+    w2v_path = os.path.join(dump_path, "mms_7", speaker, os.path.basename(audio_path).replace(".flac", ".w2v.pt").replace(".wav", ".w2v.pt"))
+    text_path = os.path.join(dump_path, "tokens", speaker, os.path.basename(audio_path).replace(".flac", ".txt.pt").replace(".wav", ".txt.pt"))
     
-    # if not (os.path.exists(f0_path) and os.path.exists(w2v_path) and os.path.exists(text_path)):
-    preprocess(filepath, text, hps, f0_path, w2v_path, text_path)
+    if not (os.path.exists(f0_path) and os.path.exists(w2v_path) and os.path.exists(text_path)):
+        try:
+            preprocess(filepath, text, hps, f0_path, w2v_path, text_path, language)
+            filepaths.append(filepath)
+            f0_paths.append(f0_path)
+            w2v_paths.append(w2v_path)
+            text_paths.append(text_path)
+        except Exception as e:
+            print(e)
 
 
 
 if __name__=="__main__":
     dump = "train"
 
-    metadata_path = f"/root/dev/xtts_hindi_ft_dataset/metadata_{dump}.csv"
-    dump_path = "/root/dev/xtts_hindi_ft_dataset/hierspeechpp_dump"
+    metadata_path = f"/workspace/data/metadata_{dump}.csv"
+    dump_path = "/workspace/data/hierspeechpp_dump"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     config_file = "ttv_v1/config_hindi.json"
 
-    audio_16kHz_path = "/root/dev/xtts_hindi_ft_dataset/audio_16kHz"
+    audio_16kHz_path = "/workspace/data/audio_16kHz"
 
     os.makedirs(dump_path, exist_ok=True)
     os.makedirs(os.path.join(dump_path, "filelists"), exist_ok=True)
@@ -145,7 +155,7 @@ if __name__=="__main__":
     #     if not (os.path.exists(f0_path) and os.path.exists(w2v_path) and os.path.exists(text_path)):
     #         preprocess(filepath, text, hps, f0_path, w2v_path, text_path)
     
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         list(tqdm(executor.map(process_data, data), total=len(data)))
 
     with open(os.path.join(dump_path, "filelists", f"{dump}_wav.txt"), "w") as f:

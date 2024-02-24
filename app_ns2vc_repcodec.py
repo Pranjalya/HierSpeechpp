@@ -260,7 +260,7 @@ def main():
         "--ckpt_text2w2v",
         "-ct",
         help="text2w2v checkpoint path",
-        default="/workspace/HierSpeechpp/logs/hierspeech_hi_en/G_175000.pth",
+        default="/workspace/HierSpeechpp/logs/hierspeech_hi_en_repcodec/G_55000.pth",
     )
     parser.add_argument("--ckpt_sr", type=str, default="./speechsr24k/G_340000.pth")
     parser.add_argument("--ckpt_sr48", type=str, default="./speechsr48k/G_100000.pth")
@@ -298,7 +298,7 @@ def main():
 
     # NS2VC
     cfg_path = "config.yaml"
-    checkpoint_path_ns2vc = "/workspace/NS2VC/logs/vc/mms_7_ttv/2024-02-05-04-34-32/model-59000.pt"
+    checkpoint_path_ns2vc = "/workspace/NS2VC/logs/vc/repcodec_vc/model-226000.pt"
 
     cfg = OmegaConf.load(cfg_path)
     device = "cuda" if torch.cuda.is_available() else "cpu"
