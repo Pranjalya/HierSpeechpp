@@ -143,7 +143,7 @@ class HierspeechSynthesizer:
             **hps_t2w2v.model,
         ).to(self.device)
         self.text2w2v.load_state_dict(
-            torch.load(ckpt_text2w2v, map_location=self.device)
+            torch.load(ckpt_text2w2v, map_location=self.device)["model"]
         )
         self.text2w2v.eval()
 
